@@ -1,3 +1,5 @@
+
+
 /**VARIABLES*********/
 
 //We control which screen is active by settings / updating
@@ -7,23 +9,37 @@
 //1: Game Screen
 //2: Game-over Screen
 
-int gameScreen = 1; //initianlizing gameSreen
+int gameScreen = 0; //initianlizing gameSreen
 
 //Ball
         float ballX, ballY;
-        int ballSize = 20;
+        int ballSize = 15;
         int ballColor = color(0);
 
 //Gravity
         float gravity = 1;
         float ballSpeedVert = 0;
 
+//friction
+        float airfriction = 0.0001;
+        float friction = 0.1;
+
+//racket
+        color racketColor = color(0);
+        float racketWidth = 100;
+        float racketHeight = 10;
+        int racketBounceRate = 10;
+
+//we will start with 0, but we give 10 just for testing
+        float ballSpeedHorizon = 10;
+
+
 /**SETUP BLOCK****/
 
         void setup(){
         size(500,500);
 
-        ballX = width/4;
+        ballX = width/2;
         ballY = height/5;
 
         }
@@ -49,13 +65,15 @@ int gameScreen = 1; //initianlizing gameSreen
         textAlign(CENTER);
 
         text("Click to start", height/2, width/2);
-
         }
 
         void gameScreen(){
         background(255);
         drawBall();
+        drawRacket();
+        watchRacketBounce();
         applyGravity();
+        applyHorizontalSpeed();
         keepInScreen();
 
         }
@@ -64,34 +82,104 @@ int gameScreen = 1; //initianlizing gameSreen
         background(255);
         }
 
+/********* INPUTS *********/
+
+public void mousePressed() {
+        // if we are on the initial screen when clicked, start the game
+        if (gameScreen==0) {
+        startGame();
+        }
+        }
+
+
+/********* OTHER FUNCTIONS *********/
+
+// This method sets the necessary variables to start the game
+        void startGame() {
+        gameScreen=1;
+        }
+
         void drawBall(){
         fill(ballColor);
         ellipse(ballX, ballY, ballSize, ballSize);
         }
 
+        void drawRacket(){
+        fill(racketColor);
+        rectMode(CENTER);
+        rect(mouseX, mouseY, racketWidth, racketHeight);
+        }
+
+        void watchRacketBounce(){
+        float overhead = mouseY - pmouseY;
+        if((ballX + (ballSize/2) > mouseX - (racketWidth/2)) && (ballX - (ballSize/2) < mouseX + (racketWidth/2))) {
+        if(dist(ballX,ballY,ballX,mouseY) <= (ballSize/2) + abs(overhead)){
+        makeBounceBottom(mouseY);
+        //racket moving up
+        if(overhead < 0){
+        ballY += overhead;
+        ballSpeedVert += overhead;
+        }
+        ballSpeedHorizon = (ballX - mouseX)/5;
+        }
+        }
+        }
+
         void applyGravity(){
         ballSpeedVert += gravity;
         ballY += ballSpeedVert;
+        ballSpeedVert -= (ballSpeedVert * airfriction);
         }
 
         void makeBounceBottom(float surface){
         ballY = surface - (ballSize/2);
         ballSpeedVert *= -1;
+        ballSpeedVert -= (ballSpeedVert * friction);
         }
 
         void makeBounceTop(float surface){
         ballY = surface + (ballSize/2);
         ballSpeedVert *= -1;
+        ballSpeedVert -= (ballSpeedVert * friction);
         }
+
+        void applyHorizontalSpeed(){
+        ballX += ballSpeedHorizon;
+        ballSpeedHorizon -= (ballSpeedHorizon * airfriction);
+
+        }
+
+        void makeBounceRight(float surface){
+        ballX = surface - (ballSize/2); //bounce to the left side
+        ballSpeedHorizon *= -1;
+        ballSpeedHorizon -= (ballSpeedHorizon * friction);
+        }
+
+        void makeBounceLeft(float surface){
+        ballX = surface + (ballSize/2); //bounce to the right side
+        ballSpeedHorizon *= -1;
+        ballSpeedHorizon -= (ballSpeedHorizon * friction);
+        }
+
+
+
 
 //Keep ball in the screen
         void keepInScreen(){
-//ball hits floor
+        //ball hits floor
         if(ballY+(ballSize/2) > height){
-        makeBounceTop(0);
+        makeBounceBottom(height);
         }
-//ball hits ceiling
+        //ball hits floor
         if(ballY - (ballSize/2) < 0){
         makeBounceTop(0);
+        }
+        //ball bounce at left wall
+        if(ballX - (ballSize/2) < 0){
+        makeBounceLeft(0); //bounce occur at Left Wall.
+        }
+        //ball bounce at right wall
+        if(ballX +(ballSize/2) > width){
+        makeBounceRight(width);
         }
         }
