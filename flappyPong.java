@@ -1,5 +1,3 @@
-
-
 /**VARIABLES*********/
 
 //We control which screen is active by settings / updating
@@ -8,7 +6,6 @@
 //0: Initial Screen
 //1: Game Screen
 //2: Game-over Screen
-
 int gameScreen = 0; //initianlizing gameSreen
 
 //Ball
@@ -32,6 +29,18 @@ int gameScreen = 0; //initianlizing gameSreen
 
 //we will start with 0, but we give 10 just for testing
         float ballSpeedHorizon = 10;
+
+//Walls
+        int wallSpeed = 5;
+        int wallInterval = 1000;
+        float lastAddTime = 0;
+        int minGapHeight = 200;
+        int maxGapHeight = 300;
+        int wallWidth = 80;
+        color wallColors = color(0);
+//This arraylist stores data of the gaps between the walls. Actuals walls are draw accordingly.
+//[gapWallX,gapWallY,gapWallWidth,gapWallHeight]
+        ArrayList<int[]> walls = new ArrayList<int[]>();
 
 
 /**SETUP BLOCK****/
@@ -75,7 +84,8 @@ int gameScreen = 0; //initianlizing gameSreen
         applyGravity();
         applyHorizontalSpeed();
         keepInScreen();
-
+        wallAdder();
+        wallHandler();
         }
 
         void gameOverScreen(){
@@ -85,7 +95,7 @@ int gameScreen = 0; //initianlizing gameSreen
 /********* INPUTS *********/
 
 public void mousePressed() {
-        // if we are on the initial screen when clicked, start the game
+// if we are on the initial screen when clicked, start the game
         if (gameScreen==0) {
         startGame();
         }
@@ -115,7 +125,7 @@ public void mousePressed() {
         if((ballX + (ballSize/2) > mouseX - (racketWidth/2)) && (ballX - (ballSize/2) < mouseX + (racketWidth/2))) {
         if(dist(ballX,ballY,ballX,mouseY) <= (ballSize/2) + abs(overhead)){
         makeBounceBottom(mouseY);
-        //racket moving up
+//racket moving up
         if(overhead < 0){
         ballY += overhead;
         ballSpeedVert += overhead;
@@ -166,20 +176,64 @@ public void mousePressed() {
 
 //Keep ball in the screen
         void keepInScreen(){
-        //ball hits floor
+//ball hits floor
         if(ballY+(ballSize/2) > height){
         makeBounceBottom(height);
         }
-        //ball hits floor
+//ball hits floor
         if(ballY - (ballSize/2) < 0){
         makeBounceTop(0);
         }
-        //ball bounce at left wall
+//ball bounce at left wall
         if(ballX - (ballSize/2) < 0){
         makeBounceLeft(0); //bounce occur at Left Wall.
         }
-        //ball bounce at right wall
+//ball bounce at right wall
         if(ballX +(ballSize/2) > width){
         makeBounceRight(width);
+        }
+        }
+
+        void wallAdder(){
+        if(millis() - lastAddTime > wallInterval){
+        int randHeight = round(random(minGapHeight, maxGapHeight));
+        int randY = round(random(0, height - randHeight));
+        //{gapWallX,gapWallY,gapWallWidth,gapWallHeight}
+        int[]randWall = {width, randY, wallWidth, randHeight};
+        walls.add(randWall);
+        lastAddTime = millis();
+        }
+        }
+
+        void wallHandler(){
+        for(int i = 0; i < walls.size(); i++){
+        wallRemover(i);
+        wallMover(i);
+        wallDrawer(i);
+        }
+        }
+
+        void wallDrawer(int index){
+        int[] wall = walls.get(index);
+        //get gap wall settings
+        int gapWallX = wall[0];
+        int gapWallY = wall[1];
+        int gapWallWidth = wall[2];
+        int gapWallHeight = wall[3];
+        //draw actual walls
+        rectMode(CORNER);
+        rect(gapWallX, 0, gapWallWidth, gapWallY);
+        rect(gapWallX, gapWallY, gapWallHeight, gapWallWidth, height - (gapWallY + gapWallHeight));
+        }
+
+        void wallMover(int index){
+        int[] wall = walls.get(index);
+        wall[0] -= wallSpeed;
+        }
+
+        void wallRemover(int index){
+        int[] wall = walls.get(index);
+        if(wall[0] + wall[2] <= 0){
+        walls.remove(index);
         }
         }
