@@ -210,6 +210,7 @@ public void mousePressed() {
         wallRemover(i);
         wallMover(i);
         wallDrawer(i);
+        watchWallCollision(i);
         }
         }
 
@@ -235,5 +236,31 @@ public void mousePressed() {
         int[] wall = walls.get(index);
         if(wall[0] + wall[2] <= 0){
         walls.remove(index);
+        }
+        }
+
+        void watchWallCollision(int index){
+        int[] wall = walls.get(index);
+        //get gap wall settings
+        int gapWallX = wall[0];
+        int gapWallY = wall[1];
+        int gapWallWidth = wall[2];
+        int gapWallHeight = wall[3];
+        int wallTopX = gapWallX;
+        int wallTopY = 0;
+        int wallTopWidth = gapWallWidth;
+        int wallTopHeight = gapWallY;
+        int wallBottomX = gapWallX;
+        int wallBottomY = gapWallY = gapWallHeight;
+        int wallBottomWidth = gapWallWidth;
+        int wallBottomHeight = height - (gapWallY + gapWallHeight);
+
+        if(
+        (ballX + (ballSize/2) > wallTopX) &&
+        (ballX - (ballSize/2) < wallTopX + wallTopWidth) &&
+        (ballY + (ballSize/2) > wallTopY) &&
+        (ballY - (ballSize/2) < wallTopY + wallTopHeight)
+        ) {
+        //collides with upper wall
         }
         }
