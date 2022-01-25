@@ -31,7 +31,7 @@ int gameScreen = 0; //initianlizing gameSreen
         float ballSpeedHorizon = 10;
 
 //Walls
-        int wallSpeed = 5;
+        int wallSpeed = 4;
         int wallInterval = 1000;
         float lastAddTime = 0;
         int minGapHeight = 200;
@@ -41,6 +41,13 @@ int gameScreen = 0; //initianlizing gameSreen
 //This arraylist stores data of the gaps between the walls. Actuals walls are draw accordingly.
 //[gapWallX,gapWallY,gapWallWidth,gapWallHeight]
         ArrayList<int[]> walls = new ArrayList<int[]>();
+
+//Health and Score
+        int maxHealth = 100;
+        float health = 100;
+        float healthDecrease = 1;
+        int healthBarWidth = 60;
+        int score = 0;
 
 
 /**SETUP BLOCK****/
@@ -68,7 +75,8 @@ int gameScreen = 0; //initianlizing gameSreen
 
 /**SCREEN CONTENTS**/
 
-        void initScreen(){
+        void initScreen() {
+
         background(0);
 
         textAlign(CENTER);
@@ -86,10 +94,17 @@ int gameScreen = 0; //initianlizing gameSreen
         keepInScreen();
         wallAdder();
         wallHandler();
+        drawHealthBar();
         }
 
         void gameOverScreen(){
-        background(255);
+        background(0);
+        textAlign(CENTER);
+        fill(255);
+        textSize(30);
+        text("Game Over", height/2, width/2 - 20);
+        textSize(15);
+        text("Click to Restart", height/2, width/2 + 10);
         }
 
 /********* INPUTS *********/
@@ -98,6 +113,8 @@ public void mousePressed() {
 // if we are on the initial screen when clicked, start the game
         if (gameScreen==0) {
         startGame();
+        }else if (gameScreen == 2){
+        restart();
         }
         }
 
@@ -107,6 +124,10 @@ public void mousePressed() {
 // This method sets the necessary variables to start the game
         void startGame() {
         gameScreen=1;
+        }
+
+        void gameOver() {
+        gameScreen =2;
         }
 
         void drawBall(){
@@ -199,7 +220,7 @@ public void mousePressed() {
         int randHeight = round(random(minGapHeight, maxGapHeight));
         int randY = round(random(0, height - randHeight));
         //{gapWallX,gapWallY,gapWallWidth,gapWallHeight}
-        int[]randWall = {width, randY, wallWidth, randHeight};
+        int[]randWall = {width, randY, wallWidth, randHeight, 0};
         walls.add(randWall);
         lastAddTime = millis();
         }
@@ -223,8 +244,9 @@ public void mousePressed() {
         int gapWallHeight = wall[3];
         //draw actual walls
         rectMode(CORNER);
+        fill(wallColors);
         rect(gapWallX, 0, gapWallWidth, gapWallY);
-        rect(gapWallX, gapWallY, gapWallHeight, gapWallWidth, height - (gapWallY + gapWallHeight));
+        rect(gapWallX, gapWallY + gapWallHeight, gapWallWidth, height - (gapWallY + gapWallHeight));
         }
 
         void wallMover(int index){
@@ -241,6 +263,8 @@ public void mousePressed() {
 
         void watchWallCollision(int index){
         int[] wall = walls.get(index);
+        int wallScored = wall[4];
+
         //get gap wall settings
         int gapWallX = wall[0];
         int gapWallY = wall[1];
@@ -251,9 +275,15 @@ public void mousePressed() {
         int wallTopWidth = gapWallWidth;
         int wallTopHeight = gapWallY;
         int wallBottomX = gapWallX;
-        int wallBottomY = gapWallY = gapWallHeight;
+        int wallBottomY = gapWallY + gapWallHeight;
         int wallBottomWidth = gapWallWidth;
         int wallBottomHeight = height - (gapWallY + gapWallHeight);
+
+        if (ballX > gapWallX + (gapWallWidth/2) && wallScored == 0){
+        wallScored = 1;
+        wall[4] = 1;
+        score();
+        }
 
         if(
         (ballX + (ballSize/2) > wallTopX) &&
@@ -263,4 +293,58 @@ public void mousePressed() {
         ) {
         //collides with upper wall
         }
+
+        if(
+        (ballX + (ballSize/2) > wallBottomX) &&
+        (ballX - (ballSize/2) < wallBottomX + wallBottomWidth) &&
+        (ballY + (ballSize/2) > wallBottomY) &&
+        (ballY - (ballSize/2) < wallBottomY + wallBottomHeight)
+        ) {
+        // collides with lower wall
+        }
+        }
+
+
+        void drawHealthBar(){
+        //Make it borderless:
+        noStroke();
+        fill(236, 240, 241);
+        rectMode(CORNER);
+        rect(ballX - (healthBarWidth/2), ballY - 30, healthBarWidth, 5);
+        if(health > 60){
+        fill(46, 204, 113);
+        } else if (health > 30) {
+        fill(230,126,34);
+        } else {
+        fill(231, 76, 60);
+        }
+        rectMode(CORNER);
+        rect(ballX - (healthBarWidth/2), ballY - 30, healthBarWidth*(health/maxHealth), 5);
+        }
+        void decreaseHealth(){
+        health -= healthDecrease;
+        if(health <= 0){
+        gameOver();
+        }
+        }
+
+        void score(){
+        score++;
+        }
+        void printScore(){
+        textAlign(CENTER);
+        fill(0);
+        textSize(30);
+        text(score, height/2, 50);
+
+        }
+
+        void restart(){
+        score = 0;
+        health = maxHealth;
+        ballX=width/4;
+        ballY=height/5;
+        lastAddTime = 0;
+        walls.clear();
+        gameScreen = 0;
         }
